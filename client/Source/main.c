@@ -150,6 +150,9 @@ int main() {
   baseRotation.w = 1;
   int cooldown = -1; // calibrationCooldown
 
+  _controllerModel.materials[2].maps[0].color = *(Color *)&cfg.colController;
+  _controllerModel.materials[3].maps[0].color = *(Color *)&cfg.colInactive;
+
   initSocketShit(cfg);
 
   while (1) {
@@ -186,52 +189,52 @@ int main() {
     Vector2 pos;
     pos.x = 100;
     pos.y = 180;
-    drawStick(pos, getPacketData()->lPos, HidNpadButton_StickL, 11);
+    drawStick(pos, getPacketData()->lPos, HidNpadButton_StickL, 12);
     pos.x = 380;
     pos.y = 270;
-    drawStick(pos, getPacketData()->rPos, HidNpadButton_StickR, 12);
+    drawStick(pos, getPacketData()->rPos, HidNpadButton_StickR, 13);
     pos.x = 550;
     pos.y = 180;
     drawButton(pos, 25, 25, HidNpadButton_A, "A", 1, -12, -19, 38, 0);
     pos.x = 450;
     pos.y = 180;
-    drawButton(pos, 25, 25, HidNpadButton_Y, "Y", 1, -12, -19, 38, 14);
+    drawButton(pos, 25, 25, HidNpadButton_Y, "Y", 1, -12, -19, 38, 15);
     pos.x = 500;
     pos.y = 230;
     drawButton(pos, 25, 25, HidNpadButton_B, "B", 1, -12, -19, 38, 1);
     pos.x = 500;
     pos.y = 130;
-    drawButton(pos, 25, 25, HidNpadButton_X, "X", 1, -12, -19, 38, 13);
+    drawButton(pos, 25, 25, HidNpadButton_X, "X", 1, -12, -19, 38, 14);
     pos.x = 380;
     pos.y = 130;
-    drawButton(pos, 12, 12, HidNpadButton_Plus, "+", 1, -9, -19, 38, 9);
+    drawButton(pos, 12, 12, HidNpadButton_Plus, "+", 1, -9, -19, 38, 10);
     pos.x = 220;
     pos.y = 130;
-    drawButton(pos, 12, 12, HidNpadButton_Minus, "-", 1, -7, -21, 38, 8);
+    drawButton(pos, 12, 12, HidNpadButton_Minus, "-", 1, -7, -21, 38, 9);
     pos.x = 500;
     pos.y = 70;
-    drawButton(pos, 40, 15, HidNpadButton_R, "R", 1, -12, -20, 38, 10);
+    drawButton(pos, 40, 15, HidNpadButton_R, "R", 1, -12, -20, 38, 11);
     pos.x = 500;
     pos.y = 30;
-    drawButton(pos, 40, 15, HidNpadButton_ZR, "ZR", 1, -22, -19, 38, 16);
+    drawButton(pos, 40, 15, HidNpadButton_ZR, "ZR", 1, -22, -19, 38, 17);
     pos.x = 100;
     pos.y = 70;
-    drawButton(pos, 40, 15, HidNpadButton_L, "L", 1, -12, -20, 38, 7);
+    drawButton(pos, 40, 15, HidNpadButton_L, "L", 1, -12, -20, 38, 8);
     pos.x = 100;
     pos.y = 30;
-    drawButton(pos, 40, 15, HidNpadButton_ZL, "ZL", 1, -22, -19, 38, 15);
+    drawButton(pos, 40, 15, HidNpadButton_ZL, "ZL", 1, -22, -19, 38, 16);
     pos.x = 220;
     pos.y = 240;
-    drawButton(pos, 15, 15, HidNpadButton_Up, "", .5, 0, 0, 38, 6);
+    drawButton(pos, 15, 15, HidNpadButton_Up, "", .5, 0, 0, 38, 7);
     pos.x = 220;
     pos.y = 300;
-    drawButton(pos, 15, 15, HidNpadButton_Down, "", .5, 0, 0, 38, 3);
+    drawButton(pos, 15, 15, HidNpadButton_Down, "", .5, 0, 0, 38, 4);
     pos.x = 190;
     pos.y = 270;
-    drawButton(pos, 15, 15, HidNpadButton_Left, "", .5, 0, 0, 38, 4);
+    drawButton(pos, 15, 15, HidNpadButton_Left, "", .5, 0, 0, 38, 5);
     pos.x = 250;
     pos.y = 270;
-    drawButton(pos, 15, 15, HidNpadButton_Right, "", .5, 0, 0, 38, 5);
+    drawButton(pos, 15, 15, HidNpadButton_Right, "", .5, 0, 0, 38, 6);
 
     pos.x = 220;
     pos.y = 270;

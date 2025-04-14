@@ -18,6 +18,7 @@ typedef struct {
     CColor colStick;
     CColor colFont;
     CColor colBg;
+    CColor colController;
 } config;
 
 config loadConfig();
