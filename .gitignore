@@ -1,4 +1,5 @@
 build/
+Build/
 out/
 .cache/
 *.elf
@@ -6,3 +7,9 @@ out/
 *.nso
 *.nsp
 compile_commands.json
+client/Lib/
+client/lib/
+client/CMakeFiles/
+*.cmake
+client/Makefile
+client/CMakeCache.txt
