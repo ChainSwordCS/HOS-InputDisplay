@@ -48,6 +48,7 @@ void drawStick(Vector2 pos, HidAnalogStickState stick, HidNpadButton button, int
   at.y -= 7;
   DrawTextEx(fatFont, buf, at, 9, 2, WHITE);
 
+  /*
   if (materialIndex != -1) {
     _controllerModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
@@ -67,6 +68,7 @@ void drawStick(Vector2 pos, HidAnalogStickState stick, HidNpadButton button, int
         ? *(Color *)&cfg.colInactive
         : *(Color *)&cfg.colStick;
   }
+  */
 }
 
 Quaternion toQuaternion(float m[3][3]) {
@@ -128,7 +130,7 @@ void drawButton(Vector2 pos, float width, float height, HidNpadButton button,
   DrawTextEx(buttonFont, label, pos, fontSize, 4, cfg.useSystemButtonColor
               ? getTextColor(buttonColor)
               : *(Color *)&cfg.colFont);
-
+/*
   if (materialIndex != -1) {
     _controllerModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
@@ -144,7 +146,7 @@ void drawButton(Vector2 pos, float width, float height, HidNpadButton button,
       ? *(Color *)&cfg.colActive
       : *(Color *)&cfg.colInactive;
   }
-
+*/
 }
 
 float clamp(float num, float min, float max)
@@ -241,7 +243,8 @@ int main() {
                               (unsigned char)((getPacketData()->rightColor & -16777216) >> 0x18)
                               )};
                               
-    if (cfg.useSystemButtonColor)
+    //if (cfg.useSystemButtonColor)
+    if (false)
     {
       buttonColor = (Color) {((unsigned char)(getPacketData()->colorButton & 0xff),
                               (unsigned char)((getPacketData()->colorButton & 0xff00) >> 8),
@@ -259,7 +262,8 @@ int main() {
 
     if ((getPacketData()->styleSet & (int)(HidNpadStyleTag_JoyDual)) != 0 && cfg.enableGyroModels)
     {
-      if (cfg.useSystemControllerColor)
+      //if (cfg.useSystemControllerColor)
+      if (false)
       {
         _joyLeftModel.materials[1].maps[0].color = controllerColorLeft;
         _joyLeftModel.materials[5].maps[0].color = controllerColorLeft;
@@ -268,8 +272,8 @@ int main() {
         _joyRightModel.materials[8].maps[0].color = controllerColorRight;
         _joyRightModel.materials[9].maps[0].color = controllerColorRight;
       }
-      _joyLeftModel.materials[2].maps[0].color = (*(Color *)&cfg.colInactive);
-      _joyRightModel.materials[1].maps[0].color = (*(Color *)&cfg.colInactive);
+      //_joyLeftModel.materials[2].maps[0].color = (*(Color *)&cfg.colInactive);
+      //_joyRightModel.materials[1].maps[0].color = (*(Color *)&cfg.colInactive);
 
       if (cooldown > 0) {
         cooldown--;
