@@ -7,6 +7,8 @@ Use devkitPro and make to build
 
 ## Build (Display)
 Build with CMake, use MSys2 on Windows
+1. in client/ run `cmake -S ./ -B ./Build/`
+2. in client/Build/ run `make`
 
 ## Installation
 Place the .nsp in /atmosphere/contents/0100000000000901/exefs.nsp, the toolbox.json in /atmosphere/contents/0100000000000901/toolbox.json, and create /atmosphere/0100000000000901/flags/boot2.flag
