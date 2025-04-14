@@ -46,7 +46,7 @@ void initSocketShit(config cfg) {
   sendto(sockfd, helloPacket, sizeof(helloPacket), 0,
          (struct sockaddr *)&servaddr, len);
 
-  unsigned int configPacket[] = {0, cfg.packetsPerSecond};
+  unsigned int configPacket[] = {1, cfg.packetsPerSecond};
   sendto(sockfd, configPacket, sizeof(configPacket), 0,
          (struct sockaddr *)&servaddr, len);
 }
