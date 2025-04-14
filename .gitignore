@@ -7,8 +7,7 @@ out/
 *.nso
 *.nsp
 compile_commands.json
-client/Lib/
-client/lib/
+client/Lib/*
 client/CMakeFiles/
 *.cmake
 client/Makefile
