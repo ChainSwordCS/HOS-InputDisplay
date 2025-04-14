@@ -1,5 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
+#include <stdbool.h>
 
 typedef struct CColor {
     unsigned char r; // Color red value
@@ -19,6 +20,9 @@ typedef struct {
     CColor colFont;
     CColor colBg;
     CColor colController;
+    bool useSystemButtonColor;
+    bool useSystemControllerColor;
+    bool enableGyroModels;
 } config;
 
 config loadConfig();

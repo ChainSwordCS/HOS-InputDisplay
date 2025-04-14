@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define SWIDTH 619
 #define SHEIGHT 360
@@ -15,6 +16,8 @@ config cfg;
 Font buttonFont;
 Font fatFont;
 int global = 0;
+Color buttonColor, controllerColorLeft, controllerColorRight;
+
 Model _controllerModel; // private
 
 int countDigits(int value) {
@@ -87,6 +90,12 @@ Quaternion toQuaternion(float m[3][3]) {
   return q;
 }
 
+Color getTextColor(Color backgroundColor)
+{
+  float luminosity = (backgroundColor.r * 0.299f + backgroundColor.g * 0.587f + backgroundColor.b * 0.114f) / 255.0f;
+  return luminosity > 0.5f ? BLACK : WHITE;
+}
+
 void drawButton(Vector2 pos, float width, float height, HidNpadButton button,
                 const char *label, float roundness, float fontOffsetX,
                 float fontOffsetY, float fontSize, int materialIndex) {
@@ -101,7 +110,9 @@ void drawButton(Vector2 pos, float width, float height, HidNpadButton button,
                            : *(Color *)&cfg.colInactive);
   pos.x += fontOffsetX;
   pos.y += fontOffsetY;
-  DrawTextEx(buttonFont, label, pos, fontSize, 4, *(Color *)&cfg.colFont);
+  DrawTextEx(buttonFont, label, pos, fontSize, 4, cfg.useSystemButtonColor
+              ? getTextColor(buttonColor)
+              : *(Color *)&cfg.colFont);
 
   // TODO: test
   if (materialIndex != -1) {
@@ -109,6 +120,26 @@ void drawButton(Vector2 pos, float width, float height, HidNpadButton button,
       ? *(Color *)&cfg.colActive
       : *(Color *)&cfg.colInactive;
   }
+}
+
+float clamp(float num, float min, float max)
+{
+  if (num < min)
+    num = min;
+  else if (num > max)
+    num = max;
+  return num;
+}
+
+Color getStickColor(Color buttonColor)
+{
+  float luminosity = (buttonColor.r * 0.299f + buttonColor.g * 0.587f + buttonColor.b * 0.114f) / 255.0f;
+  int adjustFactor = luminosity > 0.5f ? -65 : 65;
+
+  buttonColor.r = (unsigned char)clamp(buttonColor.r + adjustFactor, 0, 255);
+  buttonColor.g = (unsigned char)clamp(buttonColor.g + adjustFactor, 0, 255);
+  buttonColor.b = (unsigned char)clamp(buttonColor.b + adjustFactor, 0, 255);
+  return buttonColor;
 }
 
 int main() {
@@ -180,8 +211,44 @@ int main() {
       slerpTo.z *= -1;
     }
 
+    controllerColorLeft = (Color) {((unsigned char)(getPacketData()->leftColor & 0xff),
+                              (unsigned char)((getPacketData()->leftColor & 0xff00) >> 8),
+                              (unsigned char)((getPacketData()->leftColor & 0xff0000) >> 0x10),
+                              (unsigned char)((getPacketData()->leftColor & -16777216) >> 0x18)
+                              )};
+
+    controllerColorRight = (Color) {((unsigned char)(getPacketData()->rightColor & 0xff),
+                              (unsigned char)((getPacketData()->rightColor & 0xff00) >> 8),
+                              (unsigned char)((getPacketData()->rightColor & 0xff0000) >> 0x10),
+                              (unsigned char)((getPacketData()->rightColor & -16777216) >> 0x18)
+                              )};
+                              
+    if (cfg.useSystemButtonColor)
+    {
+      buttonColor = (Color) {((unsigned char)(getPacketData()->colorButton & 0xff),
+                              (unsigned char)((getPacketData()->colorButton & 0xff00) >> 8),
+                              (unsigned char)((getPacketData()->colorButton & 0xff0000) >> 0x10),
+                              (unsigned char)((getPacketData()->colorButton & -16777216) >> 0x18)
+                              )};
+      cfg.colInactive = (*(CColor *)&buttonColor);
+      Color colStick = getStickColor(buttonColor);
+      cfg.colStick = (*(CColor *)&colStick);
+    }
+
+
     BeginDrawing();
     ClearBackground(*(Color *)&cfg.colBg);
+
+    if ((getPacketData()->styleSet & (int)(HidNpadStyleTag_JoyDual)) != 0)
+    {
+    }
+    else if ((getPacketData()->styleSet & (int)(HidNpadStyleTag_FullKey)) != 0 && cfg.enableGyroModels)
+    {
+      if (cfg.useSystemControllerColor)
+        _controllerModel.materials[2].maps[0].color = controllerColorLeft;
+      _controllerModel.materials[7].maps[0].color = (*(Color *)&cfg.colInactive);
+    }
+
     BeginMode3D(camera);
     DrawModel(_controllerModel, controllerModelPos, 2, WHITE);
     EndMode3D();

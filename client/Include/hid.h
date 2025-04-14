@@ -48,4 +48,28 @@ typedef enum {
     HidNpadButton_AnySR = HidNpadButton_LeftSR | HidNpadButton_RightSR, ///< Bitmask containing SR buttons on both Joy-Cons (Left/Right)
 } HidNpadButton;
 
+typedef enum {
+    HidNpadStyleTag_FullKey         = BITL(0), ///< Pro Controller
+    HidNpadStyleTag_Handheld        = BITL(1), ///< Joy-Con controller in handheld mode
+    HidNpadStyleTag_JoyDual         = BITL(2), ///< Joy-Con controller in dual mode
+    HidNpadStyleTag_JoyLeft         = BITL(3), ///< Joy-Con left controller in single mode
+    HidNpadStyleTag_JoyRight        = BITL(4), ///< Joy-Con right controller in single mode
+    HidNpadStyleTag_Gc              = BITL(5), ///< GameCube controller
+    HidNpadStyleTag_Palma           = BITL(6), ///< Poke Ball Plus controller
+    HidNpadStyleTag_Lark            = BITL(7), ///< NES/Famicom controller
+    HidNpadStyleTag_HandheldLark    = BITL(8), ///< NES/Famicom controller in handheld mode
+    HidNpadStyleTag_Lucia           = BITL(9), ///< SNES controller
+    HidNpadStyleTag_Lagon          = BITL(10), ///< N64 controller
+    HidNpadStyleTag_Lager          = BITL(11), ///< Sega Genesis controller
+    HidNpadStyleTag_SystemExt      = BITL(29), ///< Generic external controller
+    HidNpadStyleTag_System         = BITL(30), ///< Generic controller
+} HidNpadStyleTag;
+
+typedef enum {
+    /// Style set comprising Npad styles containing the full set of controls {FullKey, Handheld, JoyDual}
+    HidNpadStyleSet_FullCtrl = HidNpadStyleTag_FullKey | HidNpadStyleTag_Handheld | HidNpadStyleTag_JoyDual,
+    /// Style set comprising all standard Npad styles {FullKey, Handheld, JoyDual, JoyLeft, JoyRight}
+    HidNpadStyleSet_Standard = HidNpadStyleSet_FullCtrl | HidNpadStyleTag_JoyLeft | HidNpadStyleTag_JoyRight,
+} HidNpadStyleSet;
+
 #endif

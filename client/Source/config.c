@@ -37,6 +37,12 @@ static int handler(void *user, const char *section, const char *name,
     pconfig->fontPath = strdup(value);
   } else if (MATCH("config", "fatFontPath")) {
     pconfig->fatFontPath = strdup(value);
+  } else if (MATCH("config", "useSystemButtonColor")) {
+    pconfig->useSystemButtonColor = strcmp(strdup(value),"true");
+  } else if (MATCH("config", "useSystemControllerColor")) {
+    pconfig->useSystemControllerColor = strcmp(strdup(value),"true");
+  } else if (MATCH("config", "enableGyroModels")) {
+    pconfig->enableGyroModels = strcmp(strdup(value),"true");
   } else if (MATCH("colors", "inactive")) {
     pconfig->colInactive = colorFromStr(value);
   } else if (MATCH("colors", "active")) {
@@ -47,6 +53,8 @@ static int handler(void *user, const char *section, const char *name,
     pconfig->colFont = colorFromStr(value);
   } else if (MATCH("colors", "background")) {
     pconfig->colBg = colorFromStr(value);
+  } else if (MATCH("colors", "controller")) {
+    pconfig->colController = colorFromStr(value);
   } else {
     return 0; /* unknown section/name, error */
   }

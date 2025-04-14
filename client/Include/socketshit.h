@@ -25,14 +25,14 @@ typedef struct HidVector {
 
 /// HidSixAxisSensorState
 typedef struct HidSixAxisSensorState {
-    uint64_t delta_time; ///< DeltaTime
-    uint64_t sampling_number; ///< SamplingNumber
-    HidVector acceleration; ///< Acceleration
-    HidVector angular_velocity; ///< AngularVelocity
-    HidVector angle; ///< Angle
-    HidDirectionState direction; ///< Direction
-    uint32_t attributes; ///< Bitfield of \ref HidSixAxisSensorAttribute.
-    uint32_t reserved; ///< Reserved
+    uint64_t delta_time;        ///< DeltaTime          @ byte 24
+    uint64_t sampling_number;   ///< SamplingNumber     @ byte 32
+    HidVector acceleration;     ///< Acceleration       @ byte 40
+    HidVector angular_velocity; ///< AngularVelocity    @ byte 52
+    HidVector angle;            ///< Angle              @ byte 64
+    HidDirectionState direction;///< Direction          @ byte 76
+    uint32_t attributes;        ///< Bitfield of \ref HidSixAxisSensorAttribute. @ byte 108
+    uint32_t reserved;          ///< Reserved           @ byte 112
 } HidSixAxisSensorState;
 
 typedef struct PacketData {
@@ -40,6 +40,12 @@ typedef struct PacketData {
     HidAnalogStickState lPos;
     HidAnalogStickState rPos;
     HidSixAxisSensorState state;
+    char padding[100];    // @ byte 116
+    int32_t leftColor;    // @ byte 216
+    int32_t colorButton;  // @ byte 220
+    int32_t rightColor;   // @ byte 224
+    int32_t padding2;      // @ byte 228
+    int32_t styleSet;     // @ byte 232
 } PacketData;
 
 void initSocketShit(config cfg);
