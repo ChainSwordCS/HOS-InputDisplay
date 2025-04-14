@@ -18,7 +18,7 @@ Font fatFont;
 int global = 0;
 Color buttonColor, controllerColorLeft, controllerColorRight;
 
-Model _controllerModel; // private
+Model _controllerModel, _joyLeftModel, _joyRightModel;
 
 int countDigits(int value) {
   if (value < 0)
@@ -33,7 +33,8 @@ int countDigits(int value) {
   return count;
 }
 
-void drawStick(Vector2 pos, HidAnalogStickState stick, HidNpadButton button, int materialIndex) {
+void drawStick(Vector2 pos, HidAnalogStickState stick, HidNpadButton button, int materialIndex,
+                int materialIndexJoyL, int materialIndexJoyR) {
   Vector2 at;
   at.x = pos.x + stick.x / 800;
   at.y = pos.y + -stick.y / 800;
@@ -47,11 +48,24 @@ void drawStick(Vector2 pos, HidAnalogStickState stick, HidNpadButton button, int
   at.y -= 7;
   DrawTextEx(fatFont, buf, at, 9, 2, WHITE);
 
-  // TODO: test
   if (materialIndex != -1) {
     _controllerModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
       : *(Color *)&cfg.colStick;
+  }
+  if (materialIndexJoyL != -1) {
+    _joyLeftModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
+      ? *(Color *)&cfg.colActive
+      : cfg.useSystemButtonColor 
+        ? *(Color *)&cfg.colInactive
+        : *(Color *)&cfg.colStick;
+  }
+  if (materialIndexJoyR != -1) {
+    _joyRightModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
+      ? *(Color *)&cfg.colActive
+      : cfg.useSystemButtonColor 
+        ? *(Color *)&cfg.colInactive
+        : *(Color *)&cfg.colStick;
   }
 }
 
@@ -98,7 +112,8 @@ Color getTextColor(Color backgroundColor)
 
 void drawButton(Vector2 pos, float width, float height, HidNpadButton button,
                 const char *label, float roundness, float fontOffsetX,
-                float fontOffsetY, float fontSize, int materialIndex) {
+                float fontOffsetY, float fontSize, int materialIndex,
+                int materialIndexJoyL, int materialIndexJoyR) {
   Rectangle rec;
   rec.x = pos.x - width;
   rec.y = pos.y - height;
@@ -114,12 +129,22 @@ void drawButton(Vector2 pos, float width, float height, HidNpadButton button,
               ? getTextColor(buttonColor)
               : *(Color *)&cfg.colFont);
 
-  // TODO: test
   if (materialIndex != -1) {
     _controllerModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
       : *(Color *)&cfg.colInactive;
   }
+  if (materialIndexJoyL != -1) {
+    _joyLeftModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
+      ? *(Color *)&cfg.colActive
+      : *(Color *)&cfg.colInactive;
+  }
+  if (materialIndexJoyR != -1) {
+    _joyRightModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
+      ? *(Color *)&cfg.colActive
+      : *(Color *)&cfg.colInactive;
+  }
+
 }
 
 float clamp(float num, float min, float max)
@@ -162,7 +187,10 @@ int main() {
   camera.position.x = 0;
   camera.position.y = -15;
   camera.position.z = 15;
+
   _controllerModel = LoadModel("Res/Controller.glb");
+  _joyLeftModel = LoadModel("Res/JoyL.glb");
+  _joyRightModel = LoadModel("Res/JoyR.glb");
 
   Vector3 controllerModelPos;
   controllerModelPos.x = 0;
@@ -179,6 +207,18 @@ int main() {
   baseRotation.y = 0;
   baseRotation.z = 0;
   baseRotation.w = 1;
+
+  Quaternion slerpTo2;
+  slerpTo.x = 0;
+  slerpTo.y = 0;
+  slerpTo.z = 0;
+  slerpTo.w = 1;
+  Quaternion baseRotation2;
+  baseRotation.x = 0;
+  baseRotation.y = 0;
+  baseRotation.z = 0;
+  baseRotation.w = 1;
+
   int cooldown = -1; // calibrationCooldown
 
   _controllerModel.materials[2].maps[0].color = *(Color *)&cfg.colController;
@@ -188,28 +228,6 @@ int main() {
 
   while (1) {
     updateSocketShit();
-
-    Quaternion quat = toQuaternion(getPacketData()->state.direction.direction);
-    quat.x *= -1;
-    quat.y *= -1;
-    quat.z *= -1;
-    _controllerModel.transform = QuaternionToMatrix(
-        QuaternionMultiply(QuaternionInvert(baseRotation), quat));
-    if (cooldown > 0) {
-      cooldown--;
-
-      baseRotation =
-          QuaternionSlerp(baseRotation, slerpTo,
-                          ((float)cfg.packetsPerSecond / 2 - (float)cooldown) /
-                              (float)cfg.packetsPerSecond / 2);
-    }
-    if (getPacketData()->keys & HidNpadButton_StickL && cooldown <= 0) {
-      cooldown = cfg.packetsPerSecond / 2;
-      slerpTo = toQuaternion(getPacketData()->state.direction.direction);
-      slerpTo.x *= -1;
-      slerpTo.y *= -1;
-      slerpTo.z *= -1;
-    }
 
     controllerColorLeft = (Color) {((unsigned char)(getPacketData()->leftColor & 0xff),
                               (unsigned char)((getPacketData()->leftColor & 0xff00) >> 8),
@@ -239,69 +257,152 @@ int main() {
     BeginDrawing();
     ClearBackground(*(Color *)&cfg.colBg);
 
-    if ((getPacketData()->styleSet & (int)(HidNpadStyleTag_JoyDual)) != 0)
+    if ((getPacketData()->styleSet & (int)(HidNpadStyleTag_JoyDual)) != 0 && cfg.enableGyroModels)
     {
+      if (cfg.useSystemControllerColor)
+      {
+        _joyLeftModel.materials[1].maps[0].color = controllerColorLeft;
+        _joyLeftModel.materials[5].maps[0].color = controllerColorLeft;
+        _joyLeftModel.materials[6].maps[0].color = controllerColorLeft;
+        _joyRightModel.materials[7].maps[0].color = controllerColorRight;
+        _joyRightModel.materials[8].maps[0].color = controllerColorRight;
+        _joyRightModel.materials[9].maps[0].color = controllerColorRight;
+      }
+      _joyLeftModel.materials[2].maps[0].color = (*(Color *)&cfg.colInactive);
+      _joyRightModel.materials[1].maps[0].color = (*(Color *)&cfg.colInactive);
+
+      if (cooldown > 0) {
+        cooldown--;
+
+        baseRotation =
+            QuaternionSlerp(baseRotation, slerpTo,
+                            ((float)cfg.packetsPerSecond / 2 - (float)cooldown) /
+                                (float)cfg.packetsPerSecond / 2);
+        baseRotation2 =
+            QuaternionSlerp(baseRotation2, slerpTo2,
+                            ((float)cfg.packetsPerSecond / 2 - (float)cooldown) /
+                                (float)cfg.packetsPerSecond / 2);
+      }
+      if (getPacketData()->keys & HidNpadButton_StickL && cooldown <= 0) {
+        cooldown = cfg.packetsPerSecond / 2;
+        slerpTo = toQuaternion(getPacketData()->state.direction.direction);
+        slerpTo.x *= -1;
+        slerpTo.y *= -1;
+        slerpTo.z *= -1;
+        slerpTo2 = toQuaternion(getPacketData()->state2.direction.direction);
+        slerpTo2.x *= -1;
+        slerpTo2.y *= -1;
+        slerpTo2.z *= -1;
+      }
+
+      Quaternion leftQuat = toQuaternion(getPacketData()->state.direction.direction);
+      leftQuat.x *= -1;
+      leftQuat.y *= -1;
+      leftQuat.z *= -1;
+      _joyLeftModel.transform = QuaternionToMatrix(
+        QuaternionMultiply(QuaternionInvert(baseRotation), leftQuat));
+      Quaternion rightQuat = toQuaternion(getPacketData()->state2.direction.direction);
+      rightQuat.x *= -1;
+      rightQuat.y *= -1;
+      rightQuat.z *= -1;
+      _joyRightModel.transform = QuaternionToMatrix(
+        QuaternionMultiply(QuaternionInvert(baseRotation2), rightQuat));
+      
+      BeginMode3D(camera);
+      Vector3 posL;
+      posL.x = -4;
+      posL.y = 0;
+      posL.z = 0;
+      DrawModel(_joyLeftModel, posL, 2, WHITE);
+      Vector3 posR;
+      posR.x = 4;
+      posR.y = 0;
+      posR.z = 0;
+      DrawModel(_joyRightModel, posR, 2, WHITE);
+      EndMode3D();
     }
     else if ((getPacketData()->styleSet & (int)(HidNpadStyleTag_FullKey)) != 0 && cfg.enableGyroModels)
     {
       if (cfg.useSystemControllerColor)
         _controllerModel.materials[2].maps[0].color = controllerColorLeft;
       _controllerModel.materials[7].maps[0].color = (*(Color *)&cfg.colInactive);
-    }
 
-    BeginMode3D(camera);
-    DrawModel(_controllerModel, controllerModelPos, 2, WHITE);
-    EndMode3D();
+      Quaternion quat = toQuaternion(getPacketData()->state.direction.direction);
+      quat.x *= -1;
+      quat.y *= -1;
+      quat.z *= -1;
+      _controllerModel.transform = QuaternionToMatrix(
+          QuaternionMultiply(QuaternionInvert(baseRotation), quat));
+      if (cooldown > 0) {
+        cooldown--;
+
+        baseRotation =
+            QuaternionSlerp(baseRotation, slerpTo,
+                            ((float)cfg.packetsPerSecond / 2 - (float)cooldown) /
+                                (float)cfg.packetsPerSecond / 2);
+      }
+      if (getPacketData()->keys & HidNpadButton_StickL && cooldown <= 0) {
+        cooldown = cfg.packetsPerSecond / 2;
+        slerpTo = toQuaternion(getPacketData()->state.direction.direction);
+        slerpTo.x *= -1;
+        slerpTo.y *= -1;
+        slerpTo.z *= -1;
+      }
+
+      BeginMode3D(camera);
+      DrawModel(_controllerModel, controllerModelPos, 2, WHITE);
+      EndMode3D();
+    }
 
     Vector2 pos;
     pos.x = 100;
     pos.y = 180;
-    drawStick(pos, getPacketData()->lPos, HidNpadButton_StickL, 8);
+    drawStick(pos, getPacketData()->lPos, HidNpadButton_StickL, 8, 7, -1);
     pos.x = 380;
     pos.y = 270;
-    drawStick(pos, getPacketData()->rPos, HidNpadButton_StickR, 9);
+    drawStick(pos, getPacketData()->rPos, HidNpadButton_StickR, 9, -1, 10);
     pos.x = 550;
     pos.y = 180;
-    drawButton(pos, 25, 25, HidNpadButton_A, "A", 1, -12, -19, 38, 10);
+    drawButton(pos, 25, 25, HidNpadButton_A, "A", 1, -12, -19, 38, 10, -1, 3);
     pos.x = 450;
     pos.y = 180;
-    drawButton(pos, 25, 25, HidNpadButton_Y, "Y", 1, -12, -19, 38, 13);
+    drawButton(pos, 25, 25, HidNpadButton_Y, "Y", 1, -12, -19, 38, 13, -1, 4);
     pos.x = 500;
     pos.y = 230;
-    drawButton(pos, 25, 25, HidNpadButton_B, "B", 1, -12, -19, 38, 12);
+    drawButton(pos, 25, 25, HidNpadButton_B, "B", 1, -12, -19, 38, 12, -1, 2);
     pos.x = 500;
     pos.y = 130;
-    drawButton(pos, 25, 25, HidNpadButton_X, "X", 1, -12, -19, 38, 11);
+    drawButton(pos, 25, 25, HidNpadButton_X, "X", 1, -12, -19, 38, 11, -1, 5);
     pos.x = 380;
     pos.y = 130;
-    drawButton(pos, 12, 12, HidNpadButton_Plus, "+", 1, -9, -19, 38, 14);
+    drawButton(pos, 12, 12, HidNpadButton_Plus, "+", 1, -9, -19, 38, 14, -1, 12);
     pos.x = 220;
     pos.y = 130;
-    drawButton(pos, 12, 12, HidNpadButton_Minus, "-", 1, -7, -21, 38, 15);
+    drawButton(pos, 12, 12, HidNpadButton_Minus, "-", 1, -7, -21, 38, 15, 3, -1);
     pos.x = 500;
     pos.y = 70;
-    drawButton(pos, 40, 15, HidNpadButton_R, "R", 1, -12, -20, 38, 18);
+    drawButton(pos, 40, 15, HidNpadButton_R, "R", 1, -12, -20, 38, 18, -1, 6);
     pos.x = 500;
     pos.y = 30;
-    drawButton(pos, 40, 15, HidNpadButton_ZR, "ZR", 1, -22, -19, 38, 16);
+    drawButton(pos, 40, 15, HidNpadButton_ZR, "ZR", 1, -22, -19, 38, 16, -1, 11);
     pos.x = 100;
     pos.y = 70;
-    drawButton(pos, 40, 15, HidNpadButton_L, "L", 1, -12, -20, 38, 17);
+    drawButton(pos, 40, 15, HidNpadButton_L, "L", 1, -12, -20, 38, 17, 12, -1);
     pos.x = 100;
     pos.y = 30;
-    drawButton(pos, 40, 15, HidNpadButton_ZL, "ZL", 1, -22, -19, 38, 1);
+    drawButton(pos, 40, 15, HidNpadButton_ZL, "ZL", 1, -22, -19, 38, 1, 11, -1);
     pos.x = 220;
     pos.y = 240;
-    drawButton(pos, 15, 15, HidNpadButton_Up, "", .5, 0, 0, 38, 3);
+    drawButton(pos, 15, 15, HidNpadButton_Up, "", .5, 0, 0, 38, 3, 8, -1);
     pos.x = 220;
     pos.y = 300;
-    drawButton(pos, 15, 15, HidNpadButton_Down, "", .5, 0, 0, 38, 5);
+    drawButton(pos, 15, 15, HidNpadButton_Down, "", .5, 0, 0, 38, 5, 10, -1);
     pos.x = 190;
     pos.y = 270;
-    drawButton(pos, 15, 15, HidNpadButton_Left, "", .5, 0, 0, 38, 6);
+    drawButton(pos, 15, 15, HidNpadButton_Left, "", .5, 0, 0, 38, 6, 4, -1);
     pos.x = 250;
     pos.y = 270;
-    drawButton(pos, 15, 15, HidNpadButton_Right, "", .5, 0, 0, 38, 4);
+    drawButton(pos, 15, 15, HidNpadButton_Right, "", .5, 0, 0, 38, 4, 9, -1);
 
     pos.x = 220;
     pos.y = 270;
@@ -320,7 +421,7 @@ int main() {
     if (cooldown > 0) {
       pos.x = 180;
       pos.y = 10;
-      DrawTextEx(buttonFont, "Recalibrating", pos, 38, 4, WHITE);
+      DrawTextEx(fatFont, "Recalibrating", pos, 38, 2, WHITE);
     }
 
     EndDrawing();

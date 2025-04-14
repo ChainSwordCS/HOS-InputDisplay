@@ -40,12 +40,12 @@ typedef struct PacketData {
     HidAnalogStickState lPos;
     HidAnalogStickState rPos;
     HidSixAxisSensorState state;
-    char padding[100];    // @ byte 116
-    int32_t leftColor;    // @ byte 216
-    int32_t colorButton;  // @ byte 220
-    int32_t rightColor;   // @ byte 224
-    int32_t padding2;      // @ byte 228
-    int32_t styleSet;     // @ byte 232
+    HidSixAxisSensorState state2;
+    int32_t leftColor;    // @ byte 216?
+    int32_t colorButton;  // @ byte 220?
+    int32_t rightColor;   // @ byte 224?
+    int32_t colorButton2; // @ byte 228?
+    int32_t styleSet;     // @ byte 232?
 } PacketData;
 
 void initSocketShit(config cfg);
