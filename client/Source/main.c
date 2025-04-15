@@ -17,6 +17,8 @@ Font buttonFont;
 Font fatFont;
 int global = 0;
 Color buttonColor, stickColor, controllerColorLeft, controllerColorRight;
+HidNpadButton gyroCalibrateButton = HidNpadButton_StickL;
+bool gyroCalibrateButtonHeld = false;
 
 Model _controllerModel, _joyLeftModel, _joyRightModel;
 
@@ -217,6 +219,7 @@ int main() {
   baseRotation.w = 1;
 
   int cooldown = -1; // calibrationCooldown
+  /* FINAL */float initialCooldown = cfg.packetsPerSecond / 2;
 
   //_controllerModel.materials[2].maps[0].color = colController;
   //_controllerModel.materials[7].maps[0].color = colInactive;
@@ -252,103 +255,106 @@ int main() {
     BeginDrawing();
     ClearBackground(*(Color *)&cfg.colBg);
 
-    if ((getPacketData()->styleTag & (int)(HidNpadStyleTag_JoyDual)) != 0 && cfg.enableGyroModels)
+    if (cfg.enableGyroModels)
     {
-      _joyLeftModel.materials[1].maps[0].color = controllerColorLeft;
-      _joyLeftModel.materials[5].maps[0].color = controllerColorLeft;
-      _joyLeftModel.materials[6].maps[0].color = controllerColorLeft;
+      // new behavior: recalibrate only upon initial press.
+      // mimics Splatoon 3.
+      if (getPacketData()->keys & gyroCalibrateButton) {
+        if (gyroCalibrateButtonHeld) {
+          // button is being held; do nothing
+        } else {
+          // note: the *real* position is recalibrated instantly.
+          // the rotation easing animation is just a facade.
+          slerpTo = toQuaternion(getPacketData()->states[0].direction.direction);
+          slerpTo.x *= -1;
+          slerpTo.y *= -1;
+          slerpTo.z *= -1;
+          slerpTo2 = toQuaternion(getPacketData()->states[1].direction.direction);
+          slerpTo2.x *= -1;
+          slerpTo2.y *= -1;
+          slerpTo2.z *= -1;
+          cooldown = initialCooldown;
+          gyroCalibrateButtonHeld = true;
+        }
+      } else {
+        // button is unpressed
+        gyroCalibrateButtonHeld = false;
+      }
 
-      _joyLeftModel.materials[2].maps[0].color = buttonColor;
-      _joyLeftModel.materials[3].maps[0].color = buttonColor;
-      _joyLeftModel.materials[4].maps[0].color = buttonColor;
-
-      _joyRightModel.materials[7].maps[0].color = controllerColorRight;
-      _joyRightModel.materials[8].maps[0].color = controllerColorRight;
-      _joyRightModel.materials[9].maps[0].color = controllerColorRight;
-
-      _joyRightModel.materials[1].maps[0].color = buttonColor;
-
+      // handle recalibration rotation easing
       if (cooldown > 0) {
         cooldown--;
 
+        // rounding errors inbound.
+        // but it works out fine, and thus doesn't matter.
+        // it just means acceleration may be a little wonky.
         baseRotation =
             QuaternionSlerp(baseRotation, slerpTo,
-                            ((float)cfg.packetsPerSecond / 2 - (float)cooldown) /
-                                (float)cfg.packetsPerSecond / 2);
+                            (initialCooldown - (float)cooldown) / initialCooldown);
         baseRotation2 =
             QuaternionSlerp(baseRotation2, slerpTo2,
-                            ((float)cfg.packetsPerSecond / 2 - (float)cooldown) /
-                                (float)cfg.packetsPerSecond / 2);
-      }
-      if (getPacketData()->keys & HidNpadButton_StickL && cooldown <= 0) {
-        cooldown = cfg.packetsPerSecond / 2;
-        slerpTo = toQuaternion(getPacketData()->states[0].direction.direction);
-        slerpTo.x *= -1;
-        slerpTo.y *= -1;
-        slerpTo.z *= -1;
-        slerpTo2 = toQuaternion(getPacketData()->states[1].direction.direction);
-        slerpTo2.x *= -1;
-        slerpTo2.y *= -1;
-        slerpTo2.z *= -1;
+                            (initialCooldown - (float)cooldown) / initialCooldown);
       }
 
-      Quaternion leftQuat = toQuaternion(getPacketData()->states[0].direction.direction);
-      leftQuat.x *= -1;
-      leftQuat.y *= -1;
-      leftQuat.z *= -1;
-      _joyLeftModel.transform = QuaternionToMatrix(
-        QuaternionMultiply(QuaternionInvert(baseRotation), leftQuat));
-      
-      Quaternion rightQuat = toQuaternion(getPacketData()->states[1].direction.direction);
-      rightQuat.x *= -1;
-      rightQuat.y *= -1;
-      rightQuat.z *= -1;
-      _joyRightModel.transform = QuaternionToMatrix(
-        QuaternionMultiply(QuaternionInvert(baseRotation2), rightQuat));
-      
-      BeginMode3D(camera);
-      Vector3 posL;
-      posL.x = -4;
-      posL.y = 0;
-      posL.z = 0;
-      DrawModel(_joyLeftModel, posL, 2, WHITE);
-      Vector3 posR;
-      posR.x = 4;
-      posR.y = 0;
-      posR.z = 0;
-      DrawModel(_joyRightModel, posR, 2, WHITE);
-      EndMode3D();
-    }
-    else if ((getPacketData()->styleTag & (int)(HidNpadStyleTag_FullKey)) != 0 && cfg.enableGyroModels)
-    {
-      _controllerModel.materials[2].maps[0].color = controllerColorLeft;
-      _controllerModel.materials[7].maps[0].color = buttonColor;
+      if ((getPacketData()->styleTag & (int)(HidNpadStyleTag_JoyDual)) != 0)
+      {
+        _joyLeftModel.materials[1].maps[0].color = controllerColorLeft;
+        _joyLeftModel.materials[5].maps[0].color = controllerColorLeft;
+        _joyLeftModel.materials[6].maps[0].color = controllerColorLeft;
 
-      Quaternion quat = toQuaternion(getPacketData()->states[0].direction.direction);
-      quat.x *= -1;
-      quat.y *= -1;
-      quat.z *= -1;
-      _controllerModel.transform = QuaternionToMatrix(
-          QuaternionMultiply(QuaternionInvert(baseRotation), quat));
-      if (cooldown > 0) {
-        cooldown--;
+        _joyLeftModel.materials[2].maps[0].color = buttonColor;
+        _joyLeftModel.materials[3].maps[0].color = buttonColor;
+        _joyLeftModel.materials[4].maps[0].color = buttonColor;
 
-        baseRotation =
-            QuaternionSlerp(baseRotation, slerpTo,
-                            ((float)cfg.packetsPerSecond / 2 - (float)cooldown) /
-                                (float)cfg.packetsPerSecond / 2);
+        _joyRightModel.materials[7].maps[0].color = controllerColorRight;
+        _joyRightModel.materials[8].maps[0].color = controllerColorRight;
+        _joyRightModel.materials[9].maps[0].color = controllerColorRight;
+
+        _joyRightModel.materials[1].maps[0].color = buttonColor;
+
+        Quaternion leftQuat = toQuaternion(getPacketData()->states[0].direction.direction);
+        leftQuat.x *= -1;
+        leftQuat.y *= -1;
+        leftQuat.z *= -1;
+        _joyLeftModel.transform = QuaternionToMatrix(
+          QuaternionMultiply(QuaternionInvert(baseRotation), leftQuat));
+        
+        Quaternion rightQuat = toQuaternion(getPacketData()->states[1].direction.direction);
+        rightQuat.x *= -1;
+        rightQuat.y *= -1;
+        rightQuat.z *= -1;
+        _joyRightModel.transform = QuaternionToMatrix(
+          QuaternionMultiply(QuaternionInvert(baseRotation2), rightQuat));
+        
+        BeginMode3D(camera);
+        Vector3 posL;
+        posL.x = -4;
+        posL.y = 0;
+        posL.z = 0;
+        DrawModel(_joyLeftModel, posL, 2, WHITE);
+        Vector3 posR;
+        posR.x = 4;
+        posR.y = 0;
+        posR.z = 0;
+        DrawModel(_joyRightModel, posR, 2, WHITE);
+        EndMode3D();
       }
-      if (getPacketData()->keys & HidNpadButton_StickL && cooldown <= 0) {
-        cooldown = cfg.packetsPerSecond / 2;
-        slerpTo = toQuaternion(getPacketData()->states[0].direction.direction);
-        slerpTo.x *= -1;
-        slerpTo.y *= -1;
-        slerpTo.z *= -1;
-      }
+      else if ((getPacketData()->styleTag & (int)(HidNpadStyleTag_FullKey)) != 0)
+      {
+        _controllerModel.materials[2].maps[0].color = controllerColorLeft;
+        _controllerModel.materials[7].maps[0].color = buttonColor;
 
-      BeginMode3D(camera);
-      DrawModel(_controllerModel, controllerModelPos, 2, WHITE);
-      EndMode3D();
+        Quaternion quat = toQuaternion(getPacketData()->states[0].direction.direction);
+        quat.x *= -1;
+        quat.y *= -1;
+        quat.z *= -1;
+        _controllerModel.transform = QuaternionToMatrix(
+            QuaternionMultiply(QuaternionInvert(baseRotation), quat));
+
+        BeginMode3D(camera);
+        DrawModel(_controllerModel, controllerModelPos, 2, WHITE);
+        EndMode3D();
+      }
     }
 
     Vector2 pos;
