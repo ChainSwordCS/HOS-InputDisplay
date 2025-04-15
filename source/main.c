@@ -46,7 +46,7 @@ void __appInit(void) {
     diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));
 
   static const SocketInitConfig socketInitConfig = {
-      .bsdsockets_version = 1,
+      //.bsdsockets_version = 1,
 
       .tcp_tx_buf_size = 1024,
       .tcp_rx_buf_size = 256,
