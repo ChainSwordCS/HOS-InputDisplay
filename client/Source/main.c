@@ -389,11 +389,11 @@ int main() {
     pos.x = 500;
     pos.y = 130;
     drawButton(pos, 25, 25, HidNpadButton_X, "X", 1, -12, -19, 38, 11, -1, 5);
-    pos.x = 380;
-    pos.y = 130;
+    pos.x = 324;
+    pos.y = 220;
     drawButton(pos, 12, 12, HidNpadButton_Plus, "+", 1, -9, -19, 38, 14, -1, 12);
-    pos.x = 220;
-    pos.y = 130;
+    pos.x = 276;
+    pos.y = 220;
     drawButton(pos, 12, 12, HidNpadButton_Minus, "-", 1, -7, -21, 38, 15, 3, -1);
     pos.x = 500;
     pos.y = 70;
