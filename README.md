@@ -6,9 +6,25 @@ Nintendo switch input display meant as a replacement for OJDS-NX, because OJDS-N
 Use devkitPro and make to build
 
 ## Build (Display)
+
+### statically-linked libraries
+
+note: these instructions are specific to this branch/fork. i'm probably doing this wrong, but using git submodules like the base project made me run into weird issues i couldn't solve and had to work around. (this is my workaround.)
+
+- Download [inih (version r57)](https://github.com/benhoyt/inih/releases/tag/r57) and [raylib v4.5.0](https://github.com/raysan5/raylib/releases/tag/4.5.0). For each, download by clicking the blue-text hyperlink that reads "Source code (zip)".
+- Move the downloaded .zip files into the project's `client/Lib/` folder, then unzip them.
+- For the resulting unzipped folders, rename them "inih" and "raylib" respectively.
+- The folders should look something like the following screenshots:
+
+| ![folder_inih](https://github.com/user-attachments/assets/adf14fa4-5d97-4aa9-ad67-e03d0ac516eb) | ![folder_raylib](https://github.com/user-attachments/assets/6a5826fe-4694-4cfb-9f2d-7c2bfed96125) |
+| ------------- | ------------- |
+
+### cmake build
 Build with CMake, use MSys2 on Windows
 1. in client/ run `cmake -S ./ -B ./Build/`
 2. in client/Build/ run `make`
+
+the resulting files will be in the client/Build/ folder. the executable is named HOS-InputDisplay, and the config.ini file is in the client/Build/Res/ folder.
 
 ## Installation
 Place the .nsp in /atmosphere/contents/0100000000000901/exefs.nsp, the toolbox.json in /atmosphere/contents/0100000000000901/toolbox.json, and create /atmosphere/0100000000000901/flags/boot2.flag
