@@ -42,30 +42,28 @@ void drawStick(Vector2 pos, HidAnalogStickState stick, HidNpadButton button, int
   DrawCircleV(at, 40,
               getPacketData()->keys & button ? *(Color *)&cfg.colActive
                                              : stickColor);
-  
+  /* debugging code
   char buf[64];
   snprintf(buf, sizeof(buf), "%d", global);
   at.x -= countDigits(global) * 3;
   at.y -= 7;
   DrawTextEx(fatFont, buf, at, 9, 2, WHITE);
-  
-/*
+  */
   if (materialIndex != -1) {
     _controllerModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
-      : stickColor;
+      : buttonColor;
   }
   if (materialIndexJoyL != -1) {
-    _joyLeftModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
+    _joyLeftModel.materials[materialIndexJoyL].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
-      : stickColor;
+      : buttonColor;
   }
   if (materialIndexJoyR != -1) {
-    _joyRightModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
+    _joyRightModel.materials[materialIndexJoyR].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
-      : stickColor;
+      : buttonColor;
   }
-  */
 }
 
 Quaternion toQuaternion(float m[3][3]) {
@@ -127,23 +125,21 @@ void drawButton(Vector2 pos, float width, float height, HidNpadButton button,
   DrawTextEx(buttonFont, label, pos, fontSize, 4, cfg.useSystemButtonColor
               ? getTextColor(buttonColor)
               : *(Color *)&cfg.colFont);
-  /*
   if (materialIndex != -1) {
     _controllerModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
       : buttonColor;
   }
   if (materialIndexJoyL != -1) {
-    _joyLeftModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
+    _joyLeftModel.materials[materialIndexJoyL].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
       : buttonColor;
   }
   if (materialIndexJoyR != -1) {
-    _joyRightModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
+    _joyRightModel.materials[materialIndexJoyR].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
       : buttonColor;
   }
-  */
 }
 
 float clamp(float num, float min, float max)
