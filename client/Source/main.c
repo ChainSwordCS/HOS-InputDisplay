@@ -225,6 +225,19 @@ int main() {
   //_controllerModel.materials[7].maps[0].color = colInactive;
 
   initSocketShit(cfg);
+  updateSocketShit();
+
+  // bugfix: recalibrate gyro on first frame
+  // (because uncalibrated values can be buggy)
+  slerpTo = toQuaternion(getPacketData()->states[0].direction.direction);
+  slerpTo.x *= -1;
+  slerpTo.y *= -1;
+  slerpTo.z *= -1;
+  slerpTo2 = toQuaternion(getPacketData()->states[1].direction.direction);
+  slerpTo2.x *= -1;
+  slerpTo2.y *= -1;
+  slerpTo2.z *= -1;
+  cooldown = initialCooldown;
 
   while (1) {
     updateSocketShit();
