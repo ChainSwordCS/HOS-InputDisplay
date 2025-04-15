@@ -221,8 +221,19 @@ int main() {
   int cooldown = -1; // calibrationCooldown
   /* FINAL */float initialCooldown = cfg.packetsPerSecond / 2;
 
-  //_controllerModel.materials[2].maps[0].color = colController;
-  //_controllerModel.materials[7].maps[0].color = colInactive;
+  controllerColorLeft.r = cfg.colController.r;
+  controllerColorLeft.g = cfg.colController.g;
+  controllerColorLeft.b = cfg.colController.b;
+  controllerColorLeft.a = cfg.colController.a;
+  controllerColorRight.r = cfg.colController.r;
+  controllerColorRight.g = cfg.colController.g;
+  controllerColorRight.b = cfg.colController.b;
+  controllerColorRight.a = cfg.colController.a;
+  buttonColor.r = cfg.colInactive.r;
+  buttonColor.g = cfg.colInactive.g;
+  buttonColor.b = cfg.colInactive.b;
+  buttonColor.a = cfg.colInactive.a;
+  stickColor = generateStickColor(buttonColor);
 
   initSocketShit(cfg);
   updateSocketShit();
