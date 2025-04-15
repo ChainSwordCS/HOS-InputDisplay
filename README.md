@@ -16,7 +16,7 @@ note: these instructions are specific to this branch/fork. i'm probably doing th
 - For the resulting unzipped folders, rename them "inih" and "raylib" respectively.
 - The folders should look something like the following screenshots:
 
-| ![folder_inih](https://github.com/user-attachments/assets/adf14fa4-5d97-4aa9-ad67-e03d0ac516eb) | ![folder_raylib](https://github.com/user-attachments/assets/6a5826fe-4694-4cfb-9f2d-7c2bfed96125) |
+| ![folder_inih.png](doc/folder_inih.png) | ![folder_raylib.png](doc/folder_raylib.png) |
 | ------------- | ------------- |
 
 ### cmake build
