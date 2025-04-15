@@ -16,7 +16,7 @@ config cfg;
 Font buttonFont;
 Font fatFont;
 int global = 0;
-Color buttonColor, controllerColorLeft, controllerColorRight;
+Color buttonColor, stickColor, controllerColorLeft, controllerColorRight;
 
 Model _controllerModel, _joyLeftModel, _joyRightModel;
 
@@ -38,35 +38,32 @@ void drawStick(Vector2 pos, HidAnalogStickState stick, HidNpadButton button, int
   Vector2 at;
   at.x = pos.x + stick.x / 800;
   at.y = pos.y + -stick.y / 800;
-  DrawRing(pos, 56, 50, 0, 360, 40, *(Color *)&cfg.colInactive);
+  DrawRing(pos, 56, 50, 0, 360, 40, buttonColor);
   DrawCircleV(at, 40,
               getPacketData()->keys & button ? *(Color *)&cfg.colActive
-                                             : *(Color *)&cfg.colStick);
+                                             : stickColor);
+  
   char buf[64];
   snprintf(buf, sizeof(buf), "%d", global);
   at.x -= countDigits(global) * 3;
   at.y -= 7;
   DrawTextEx(fatFont, buf, at, 9, 2, WHITE);
-
-  /*
+  
+/*
   if (materialIndex != -1) {
     _controllerModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
-      : *(Color *)&cfg.colStick;
+      : stickColor;
   }
   if (materialIndexJoyL != -1) {
     _joyLeftModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
-      : cfg.useSystemButtonColor 
-        ? *(Color *)&cfg.colInactive
-        : *(Color *)&cfg.colStick;
+      : stickColor;
   }
   if (materialIndexJoyR != -1) {
     _joyRightModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
-      : cfg.useSystemButtonColor 
-        ? *(Color *)&cfg.colInactive
-        : *(Color *)&cfg.colStick;
+      : stickColor;
   }
   */
 }
@@ -124,29 +121,29 @@ void drawButton(Vector2 pos, float width, float height, HidNpadButton button,
   DrawRectangleRounded(rec, roundness, 8,
                        getPacketData()->keys & button
                            ? *(Color *)&cfg.colActive
-                           : *(Color *)&cfg.colInactive);
+                           : buttonColor);
   pos.x += fontOffsetX;
   pos.y += fontOffsetY;
   DrawTextEx(buttonFont, label, pos, fontSize, 4, cfg.useSystemButtonColor
               ? getTextColor(buttonColor)
               : *(Color *)&cfg.colFont);
-/*
+  /*
   if (materialIndex != -1) {
     _controllerModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
-      : *(Color *)&cfg.colInactive;
+      : buttonColor;
   }
   if (materialIndexJoyL != -1) {
     _joyLeftModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
-      : *(Color *)&cfg.colInactive;
+      : buttonColor;
   }
   if (materialIndexJoyR != -1) {
     _joyRightModel.materials[materialIndex].maps[0].color = (getPacketData()->keys & button) != 0 
       ? *(Color *)&cfg.colActive
-      : *(Color *)&cfg.colInactive;
+      : buttonColor;
   }
-*/
+  */
 }
 
 float clamp(float num, float min, float max)
@@ -158,15 +155,17 @@ float clamp(float num, float min, float max)
   return num;
 }
 
-Color getStickColor(Color buttonColor)
+Color generateStickColor(Color buttonColor)
 {
   float luminosity = (buttonColor.r * 0.299f + buttonColor.g * 0.587f + buttonColor.b * 0.114f) / 255.0f;
   int adjustFactor = luminosity > 0.5f ? -65 : 65;
 
-  buttonColor.r = (unsigned char)clamp(buttonColor.r + adjustFactor, 0, 255);
-  buttonColor.g = (unsigned char)clamp(buttonColor.g + adjustFactor, 0, 255);
-  buttonColor.b = (unsigned char)clamp(buttonColor.b + adjustFactor, 0, 255);
-  return buttonColor;
+  Color myStickColor;
+  myStickColor.r = (unsigned char)clamp(buttonColor.r + adjustFactor, 0, 255);
+  myStickColor.g = (unsigned char)clamp(buttonColor.g + adjustFactor, 0, 255);
+  myStickColor.b = (unsigned char)clamp(buttonColor.b + adjustFactor, 0, 255);
+  myStickColor.a = 255;
+  return myStickColor;
 }
 
 int main() {
@@ -223,57 +222,55 @@ int main() {
 
   int cooldown = -1; // calibrationCooldown
 
-  _controllerModel.materials[2].maps[0].color = *(Color *)&cfg.colController;
-  _controllerModel.materials[7].maps[0].color = *(Color *)&cfg.colInactive;
+  //_controllerModel.materials[2].maps[0].color = colController;
+  //_controllerModel.materials[7].maps[0].color = colInactive;
 
   initSocketShit(cfg);
 
   while (1) {
     updateSocketShit();
 
-    controllerColorLeft = (Color) {((unsigned char)(getPacketData()->leftColor & 0xff),
-                              (unsigned char)((getPacketData()->leftColor & 0xff00) >> 8),
-                              (unsigned char)((getPacketData()->leftColor & 0xff0000) >> 0x10),
-                              (unsigned char)((getPacketData()->leftColor & -16777216) >> 0x18)
-                              )};
-
-    controllerColorRight = (Color) {((unsigned char)(getPacketData()->rightColor & 0xff),
-                              (unsigned char)((getPacketData()->rightColor & 0xff00) >> 8),
-                              (unsigned char)((getPacketData()->rightColor & 0xff0000) >> 0x10),
-                              (unsigned char)((getPacketData()->rightColor & -16777216) >> 0x18)
-                              )};
-                              
-    //if (cfg.useSystemButtonColor)
-    if (false)
+    if (cfg.useSystemControllerColor)
     {
-      buttonColor = (Color) {((unsigned char)(getPacketData()->colorButton & 0xff),
-                              (unsigned char)((getPacketData()->colorButton & 0xff00) >> 8),
-                              (unsigned char)((getPacketData()->colorButton & 0xff0000) >> 0x10),
-                              (unsigned char)((getPacketData()->colorButton & -16777216) >> 0x18)
-                              )};
-      cfg.colInactive = (*(CColor *)&buttonColor);
-      Color colStick = getStickColor(buttonColor);
-      cfg.colStick = (*(CColor *)&colStick);
+      controllerColorLeft.r = (unsigned char)(getPacketData()->colors[0].shellColor & 0xff);
+      controllerColorLeft.g = (unsigned char)((getPacketData()->colors[0].shellColor & 0xff00) >> 8);
+      controllerColorLeft.b = (unsigned char)((getPacketData()->colors[0].shellColor & 0xff0000) >> 0x10);
+      controllerColorLeft.a = 255;
+
+      controllerColorRight.r = (unsigned char)(getPacketData()->colors[1].shellColor & 0xff);
+      controllerColorRight.g = (unsigned char)((getPacketData()->colors[1].shellColor & 0xff00) >> 8);
+      controllerColorRight.b = (unsigned char)((getPacketData()->colors[1].shellColor & 0xff0000) >> 0x10);
+      controllerColorRight.a = 255;
+    }
+  
+    if (cfg.useSystemButtonColor)
+    {
+      buttonColor.r = (unsigned char)(getPacketData()->colors[0].buttonColor & 0xff);
+      buttonColor.g = (unsigned char)((getPacketData()->colors[0].buttonColor & 0xff00) >> 8);
+      buttonColor.b = (unsigned char)((getPacketData()->colors[0].buttonColor & 0xff0000) >> 0x10);
+      buttonColor.a = 255;
+      stickColor = generateStickColor(buttonColor);
     }
 
 
     BeginDrawing();
     ClearBackground(*(Color *)&cfg.colBg);
 
-    if ((getPacketData()->styleSet & (int)(HidNpadStyleTag_JoyDual)) != 0 && cfg.enableGyroModels)
+    if ((getPacketData()->styleTag & (int)(HidNpadStyleTag_JoyDual)) != 0 && cfg.enableGyroModels)
     {
-      //if (cfg.useSystemControllerColor)
-      if (false)
-      {
-        _joyLeftModel.materials[1].maps[0].color = controllerColorLeft;
-        _joyLeftModel.materials[5].maps[0].color = controllerColorLeft;
-        _joyLeftModel.materials[6].maps[0].color = controllerColorLeft;
-        _joyRightModel.materials[7].maps[0].color = controllerColorRight;
-        _joyRightModel.materials[8].maps[0].color = controllerColorRight;
-        _joyRightModel.materials[9].maps[0].color = controllerColorRight;
-      }
-      //_joyLeftModel.materials[2].maps[0].color = (*(Color *)&cfg.colInactive);
-      //_joyRightModel.materials[1].maps[0].color = (*(Color *)&cfg.colInactive);
+      _joyLeftModel.materials[1].maps[0].color = controllerColorLeft;
+      _joyLeftModel.materials[5].maps[0].color = controllerColorLeft;
+      _joyLeftModel.materials[6].maps[0].color = controllerColorLeft;
+
+      _joyLeftModel.materials[2].maps[0].color = buttonColor;
+      _joyLeftModel.materials[3].maps[0].color = buttonColor;
+      _joyLeftModel.materials[4].maps[0].color = buttonColor;
+
+      _joyRightModel.materials[7].maps[0].color = controllerColorRight;
+      _joyRightModel.materials[8].maps[0].color = controllerColorRight;
+      _joyRightModel.materials[9].maps[0].color = controllerColorRight;
+
+      _joyRightModel.materials[1].maps[0].color = buttonColor;
 
       if (cooldown > 0) {
         cooldown--;
@@ -289,23 +286,24 @@ int main() {
       }
       if (getPacketData()->keys & HidNpadButton_StickL && cooldown <= 0) {
         cooldown = cfg.packetsPerSecond / 2;
-        slerpTo = toQuaternion(getPacketData()->state.direction.direction);
+        slerpTo = toQuaternion(getPacketData()->states[0].direction.direction);
         slerpTo.x *= -1;
         slerpTo.y *= -1;
         slerpTo.z *= -1;
-        slerpTo2 = toQuaternion(getPacketData()->state2.direction.direction);
+        slerpTo2 = toQuaternion(getPacketData()->states[1].direction.direction);
         slerpTo2.x *= -1;
         slerpTo2.y *= -1;
         slerpTo2.z *= -1;
       }
 
-      Quaternion leftQuat = toQuaternion(getPacketData()->state.direction.direction);
+      Quaternion leftQuat = toQuaternion(getPacketData()->states[0].direction.direction);
       leftQuat.x *= -1;
       leftQuat.y *= -1;
       leftQuat.z *= -1;
       _joyLeftModel.transform = QuaternionToMatrix(
         QuaternionMultiply(QuaternionInvert(baseRotation), leftQuat));
-      Quaternion rightQuat = toQuaternion(getPacketData()->state2.direction.direction);
+      
+      Quaternion rightQuat = toQuaternion(getPacketData()->states[1].direction.direction);
       rightQuat.x *= -1;
       rightQuat.y *= -1;
       rightQuat.z *= -1;
@@ -325,13 +323,12 @@ int main() {
       DrawModel(_joyRightModel, posR, 2, WHITE);
       EndMode3D();
     }
-    else if ((getPacketData()->styleSet & (int)(HidNpadStyleTag_FullKey)) != 0 && cfg.enableGyroModels)
+    else if ((getPacketData()->styleTag & (int)(HidNpadStyleTag_FullKey)) != 0 && cfg.enableGyroModels)
     {
-      if (cfg.useSystemControllerColor)
-        _controllerModel.materials[2].maps[0].color = controllerColorLeft;
-      _controllerModel.materials[7].maps[0].color = (*(Color *)&cfg.colInactive);
+      _controllerModel.materials[2].maps[0].color = controllerColorLeft;
+      _controllerModel.materials[7].maps[0].color = buttonColor;
 
-      Quaternion quat = toQuaternion(getPacketData()->state.direction.direction);
+      Quaternion quat = toQuaternion(getPacketData()->states[0].direction.direction);
       quat.x *= -1;
       quat.y *= -1;
       quat.z *= -1;
@@ -347,7 +344,7 @@ int main() {
       }
       if (getPacketData()->keys & HidNpadButton_StickL && cooldown <= 0) {
         cooldown = cfg.packetsPerSecond / 2;
-        slerpTo = toQuaternion(getPacketData()->state.direction.direction);
+        slerpTo = toQuaternion(getPacketData()->states[0].direction.direction);
         slerpTo.x *= -1;
         slerpTo.y *= -1;
         slerpTo.z *= -1;
@@ -415,12 +412,12 @@ int main() {
     rec.y = pos.y - 15; // 255
     rec.height = 15 * 2;
     rec.width = 20 * 2;
-    DrawRectangleRounded(rec, 0, 8, *(Color *)&cfg.colInactive);
+    DrawRectangleRounded(rec, 0, 8, buttonColor);
     rec.x = pos.x - 15; // 205
     rec.y = pos.y - 20; // 250
     rec.height = 20 * 2;
     rec.width = 15 * 2;
-    DrawRectangleRounded(rec, 0, 8, *(Color *)&cfg.colInactive);
+    DrawRectangleRounded(rec, 0, 8, buttonColor);
 
     if (cooldown > 0) {
       pos.x = 180;

@@ -35,17 +35,18 @@ typedef struct HidSixAxisSensorState {
     uint32_t reserved;          ///< Reserved           @ byte 112
 } HidSixAxisSensorState;
 
+typedef struct HidNpadControllerColor {
+    uint32_t shellColor;
+    uint32_t buttonColor;
+} HidNpadControllerColor;
+
 typedef struct PacketData {
     uint64_t keys;
     HidAnalogStickState lPos;
     HidAnalogStickState rPos;
-    HidSixAxisSensorState state;
-    HidSixAxisSensorState state2;
-    int32_t leftColor;    // @ byte 216?
-    int32_t colorButton;  // @ byte 220?
-    int32_t rightColor;   // @ byte 224?
-    int32_t colorButton2; // @ byte 228?
-    int32_t styleSet;     // @ byte 232?
+    HidSixAxisSensorState states[2];
+    HidNpadControllerColor colors[2];
+    uint32_t styleTag; // enum HidNpadStyleTag
 } PacketData;
 
 void initSocketShit(config cfg);

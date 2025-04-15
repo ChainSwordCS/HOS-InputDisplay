@@ -38,11 +38,11 @@ static int handler(void *user, const char *section, const char *name,
   } else if (MATCH("config", "fatFontPath")) {
     pconfig->fatFontPath = strdup(value);
   } else if (MATCH("config", "useSystemButtonColor")) {
-    pconfig->useSystemButtonColor = strcmp(strdup(value),"true");
+    pconfig->useSystemButtonColor = (strcmp(value,"true") == 0);
   } else if (MATCH("config", "useSystemControllerColor")) {
-    pconfig->useSystemControllerColor = strcmp(strdup(value),"true");
+    pconfig->useSystemControllerColor = (strcmp(value,"true") == 0);
   } else if (MATCH("config", "enableGyroModels")) {
-    pconfig->enableGyroModels = strcmp(strdup(value),"true");
+    pconfig->enableGyroModels = (strcmp(value,"true") == 0);
   } else if (MATCH("colors", "inactive")) {
     pconfig->colInactive = colorFromStr(value);
   } else if (MATCH("colors", "active")) {
