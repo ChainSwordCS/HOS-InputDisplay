@@ -9,3 +9,4 @@ out/
 *.nso
 *.nsp
 compile_commands.json
+client/Lib/
