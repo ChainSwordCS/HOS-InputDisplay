@@ -17,7 +17,7 @@ Font buttonFont;
 Font fatFont;
 int global = 0;
 Color buttonColor, stickColor, controllerColorLeft, controllerColorRight;
-HidNpadButton gyroCalibrateButton = HidNpadButton_StickL;
+HidNpadButton gyroCalibrateButton = HidNpadButton_Y;
 bool gyroCalibrateButtonHeld = false;
 
 Model _controllerModel, _joyLeftModel, _joyRightModel;
